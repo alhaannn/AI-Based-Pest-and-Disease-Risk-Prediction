@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Prediction Analytics - Pest & Disease Risk Prediction{% endblock %}
+
+{% block content %}
+<div class="prediction-analytics-page">
+    <h1><i class="fas fa-chart-bar"></i> Prediction Analytics</h1>
+    
+    <!-- Statistics -->
+    <div class="grid grid-4 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-brain"></i></div>
+            <div class="stat-value">{{ total_predictions }}</div>
+            <div class="stat-label">Total Predictions (30 days)</div>
+        </div>
+        
+        <div class="stat-card danger">
+            <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="stat-value">{{ risk_distribution.0.count|default:0 }}</div>
+            <div class="stat-label">High Risk</div>
+        </div>
+        
+        <div class="stat-card warning">
+            <div class="stat-icon"><i class="fas fa-exclamation-circle"></i></div>
+            <div class="stat-value">{{ risk_distribution.1.count|default:0 }}</div>
+            <div class="stat-label">Medium Risk</div>
+        </div>
+        
+        <div class="stat-card success">
+            <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+            <div class="stat-value">{{ risk_distribution.2.count|default:0 }}</div>
+            <div class="stat-label">Low Risk</div>
+        </div>
+    </div>
+    
+    <!-- Charts Row 1 -->
+    <div class="grid grid-2 mb-3">
+        <!-- Daily Trend -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-chart-line"></i> Daily High-Risk Predictions
+            </div>
+            <div class="card-body">
+                <canvas id="dailyTrendChart" style="height: 300px;"></canvas>
+            </div>
+        </div>
+        
+        <!-- Risk Distribution -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-chart-pie"></i> Risk Level Distribution
+            </div>
+            <div class="card-body">
+                <canvas id="riskDistChart" style="height: 300px;"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Lists -->
+    <div class="grid grid-2 mb-3">
+        <!-- Top Risky Crops -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-seedling"></i> Top 5 High-Risk Crops
+            </div>
+            <div class="card-body">
+                {% if top_crops %}
+                    {% for crop in top_crops %}
+                        <div style="padding: 1rem; background: var(--bg-primary); border-radius: 8px; margin-bottom: 0.75rem; border-left: 4px solid var(--danger-color);">
+                            <div class="flex-between">
+                                <div>
+                                    <strong style="font-size: 1.1rem;">{{ crop.crop__name }}</strong>
+                                    <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0.25rem 0 0 0;">
+                                        {{ crop.count }} high-risk prediction{{ crop.count|pluralize }}
+                                    </p>
+                                </div>
+                                <div style="font-size: 2rem; font-weight: 700; color: var(--danger-color);">
+                                    {{ crop.count }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: var(--text-muted); text-align: center; padding: 2rem;">No high-risk predictions</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Top Pests -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-bug"></i> Top 5 Most Predicted Pests
+            </div>
+            <div class="card-body">
+                {% if top_pests %}
+                    {% for pest in top_pests %}
+                        <div style="padding: 1rem; background: var(--bg-primary); border-radius: 8px; margin-bottom: 0.75rem; border-left: 4px solid var(--warning-color);">
+                            <div class="flex-between">
+                                <div>
+                                    <strong style="font-size: 1.1rem;">{{ pest.pest__name }}</strong>
+                                    <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0.25rem 0 0 0;">
+                                        {{ pest.count }} high-risk prediction{{ pest.count|pluralize }}
+                                    </p>
+                                </div>
+                                <div style="font-size: 2rem; font-weight: 700; color: var(--warning-color);">
+                                    {{ pest.count }}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: var(--text-muted); text-align: center; padding: 2rem;">No high-risk predictions</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Average Confidence by Risk Level -->
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-percentage"></i> Average Confidence by Risk Level
+        </div>
+        <div class="card-body">
+            <div class="grid grid-3">
+                {% for item in avg_confidence %}
+                    <div style="padding: 1.5rem; background: var(--bg-primary); border-radius: 8px; text-align: center;">
+                        <h4 style="margin-bottom: 0.5rem;">
+                            <span class="badge-pill badge-{% if item.risk_level == 'HIGH' %}danger{% elif item.risk_level == 'MEDIUM' %}warning{% else %}success{% endif %}" style="font-size: 1rem;">
+                                {{ item.risk_level }}
+                            </span>
+                        </h4>
+                        <div style="font-size: 2.5rem; font-weight: 700; color: var(--primary-color); margin: 1rem 0;">
+                            {{ item.avg_conf|floatformat:1 }}%
+                        </div>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">Average Confidence</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="flex gap-2 mt-3">
+        <a href="{% url 'predictions:prediction_list' %}" class="btn btn-outline">
+            <i class="fas fa-arrow-left"></i> Back to Predictions
+        </a>
+        <a href="{% url 'predictions:generate_predictions' %}" class="btn btn-primary">
+            <i class="fas fa-magic"></i> Generate New Predictions
+        </a>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Daily Trend Chart
+    const dailyTrend = JSON.parse('{{ daily_trend|safe }}');
+    const trendCtx = document.getElementById('dailyTrendChart');
+    
+    if (trendCtx && dailyTrend.length > 0) {
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: dailyTrend.map(d => d.date),
+                datasets: [{
+                    label: 'High-Risk Predictions',
+                    data: dailyTrend.map(d => d.count),
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Risk Distribution Chart
+    const riskDist = JSON.parse('{{ risk_distribution|safe }}');
+    const distCtx = document.getElementById('riskDistChart');
+    
+    if (distCtx && riskDist.length > 0) {
+        const labels = riskDist.map(d => d.risk_level);
+        const data = riskDist.map(d => d.count);
+        const colors = labels.map(label => {
+            if (label === 'HIGH') return '#ef4444';
+            if (label === 'MEDIUM') return '#f59e0b';
+            return '#10b981';
+        });
+        
+        new Chart(distCtx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: colors,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

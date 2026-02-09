@@ -1,0 +1,300 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Weather Dashboard - Pest & Disease Risk Prediction{% endblock %}
+
+{% block content %}
+<div class="weather-page">
+    <div class="flex-between mb-3">
+        <h1><i class="fas fa-cloud-sun"></i> Weather & Environmental Analysis</h1>
+        <div class="flex gap-2">
+            <a href="{% url 'weather:weather_import' %}" class="btn btn-secondary">
+                <i class="fas fa-file-import"></i> Import CSV
+            </a>
+            <a href="{% url 'weather:weather_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Weather Data
+            </a>
+        </div>
+    </div>
+    
+    <!-- Filters -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" class="flex gap-2">
+                <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                    <select name="location" class="form-control">
+                        <option value="">All Locations</option>
+                        {% for loc in locations %}
+                            <option value="{{ loc }}" {% if selected_location == loc %}selected{% endif %}>{{ loc }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group" style="flex: 0 0 200px; margin-bottom: 0;">
+                    <select name="days" class="form-control">
+                        <option value="7" {% if selected_days == 7 %}selected{% endif %}>Last 7 Days</option>
+                        <option value="14" {% if selected_days == 14 %}selected{% endif %}>Last 14 Days</option>
+                        <option value="30" {% if selected_days == 30 %}selected{% endif %}>Last 30 Days</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Apply</button>
+                <a href="{% url 'weather:weather_analysis' %}" class="btn btn-outline">
+                    <i class="fas fa-chart-line"></i> Detailed Analysis
+                </a>
+            </form>
+        </div>
+    </div>
+    
+    {% if analysis.has_data %}
+        <!-- Weather Stats -->
+        <div class="grid grid-4 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-temperature-high"></i></div>
+                <div class="stat-value">{{ analysis.avg_temperature }}°C</div>
+                <div class="stat-label">Avg Temperature</div>
+            </div>
+            
+            <div class="stat-card info">
+                <div class="stat-icon"><i class="fas fa-tint"></i></div>
+                <div class="stat-value">{{ analysis.avg_humidity }}%</div>
+                <div class="stat-label">Avg Humidity</div>
+            </div>
+            
+            <div class="stat-card warning">
+                <div class="stat-icon"><i class="fas fa-cloud-rain"></i></div>
+                <div class="stat-value">{{ analysis.total_rainfall }}mm</div>
+                <div class="stat-label">Total Rainfall</div>
+            </div>
+            
+            <div class="stat-card {{ analysis.risk_color }}">
+                <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="stat-value">{{ analysis.high_risk_days }}</div>
+                <div class="stat-label">High Risk Days</div>
+            </div>
+        </div>
+        
+        <!-- Risk Assessment -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <i class="fas fa-shield-alt"></i> Environmental Risk Assessment
+            </div>
+            <div class="card-body">
+                <div class="flex-between mb-3">
+                    <div>
+                        <h3 style="margin-bottom: 0.5rem;">Risk Level: 
+                            <span class="badge-pill badge-{{ analysis.risk_color }}" style="font-size: 1.2rem;">
+                                {{ analysis.risk_level }}
+                            </span>
+                        </h3>
+                        <p style="color: var(--text-muted);">
+                            {{ analysis.risk_percentage }}% of days showed high-risk conditions 
+                            ({{ analysis.high_risk_days }}/{{ analysis.days_analyzed }} days)
+                        </p>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 3rem; font-weight: 700; color: var(--{{ analysis.risk_color }}-color);">
+                            {{ analysis.risk_percentage|floatformat:0 }}%
+                        </div>
+                    </div>
+                </div>
+                
+                {% if analysis.risk_factors %}
+                    <div style="padding: 1rem; background: var(--bg-primary); border-radius: 8px; border-left: 4px solid var(--{{ analysis.risk_color }}-color);">
+                        <h4 style="margin-bottom: 0.75rem;"><i class="fas fa-list"></i> Risk Factors:</h4>
+                        <ul style="margin: 0; padding-left: 1.5rem;">
+                            {% for factor in analysis.risk_factors %}
+                                <li style="margin-bottom: 0.5rem; color: var(--text-secondary);">{{ factor }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Weather Trends Chart -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <i class="fas fa-chart-area"></i> Weather Trends (Last 30 Days)
+            </div>
+            <div class="card-body">
+                <canvas id="weatherTrendChart" style="height: 300px;"></canvas>
+            </div>
+        </div>
+        
+        <!-- Weather Alerts -->
+        {% if alerts %}
+        <div class="card mb-3">
+            <div class="card-header">
+                <i class="fas fa-bell"></i> Recent Weather Alerts
+            </div>
+            <div class="card-body">
+                <div class="grid grid-2">
+                    {% for alert in alerts %}
+                        <div style="padding: 1rem; background: var(--bg-primary); border-radius: 8px; border-left: 3px solid var(--danger-color);">
+                            <div class="flex-between mb-1">
+                                <strong>{{ alert.location }}</strong>
+                                <span style="color: var(--text-muted); font-size: 0.85rem;">{{ alert.date }}</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0.5rem 0;">
+                                {{ alert.message }}
+                            </p>
+                            <div style="font-size: 0.85rem; color: var(--text-muted);">
+                                Temp: {{ alert.temperature }}°C • Humidity: {{ alert.humidity }}% • Rainfall: {{ alert.rainfall }}mm
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    {% else %}
+        <div class="card mb-3">
+            <div class="card-body" style="text-align: center; padding: 3rem;">
+                <i class="fas fa-info-circle" style="font-size: 3rem; color: var(--info-color); margin-bottom: 1rem;"></i>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem;">{{ analysis.message }}</p>
+            </div>
+        </div>
+    {% endif %}
+    
+    <!-- Weather Data Table -->
+    <div class="card">
+        <div class="card-header flex-between">
+            <span><i class="fas fa-table"></i> Recent Weather Data</span>
+            <span style="color: var(--text-muted); font-size: 0.9rem;">Showing latest 15 records</span>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Location</th>
+                        <th>Temperature (°C)</th>
+                        <th>Humidity (%)</th>
+                        <th>Rainfall (mm)</th>
+                        <th>Wind Speed (km/h)</th>
+                        <th>Risk Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for weather in weather_data %}
+                        <tr>
+                            <td>{{ weather.date }}</td>
+                            <td>{{ weather.location }}</td>
+                            <td>{{ weather.temperature_avg }}</td>
+                            <td>{{ weather.humidity }}</td>
+                            <td>{{ weather.rainfall }}</td>
+                            <td>{{ weather.wind_speed }}</td>
+                            <td>
+                                {% if weather.is_high_risk_conditions %}
+                                    <span class="badge-pill badge-danger">High Risk</span>
+                                {% else %}
+                                    <span class="badge-pill badge-success">Normal</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'weather:weather_update' weather.pk %}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'weather:weather_delete' weather.pk %}" class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="return confirm('Delete this record?');">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="8" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                                <i class="fas fa-cloud-sun" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                                <p>No weather data available.</p>
+                                <a href="{% url 'weather:weather_create' %}" class="btn btn-primary mt-2">
+                                    <i class="fas fa-plus"></i> Add Weather Data
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const trendData = JSON.parse('{{ trend_data|safe }}');
+    
+    const ctx = document.getElementById('weatherTrendChart');
+    if (ctx && trendData.dates && trendData.dates.length > 0) {
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: trendData.dates,
+                datasets: [
+                    {
+                        label: 'Temperature (°C)',
+                        data: trendData.temperatures,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        yAxisID: 'y',
+                        tension: 0.4,
+                    },
+                    {
+                        label: 'Humidity (%)',
+                        data: trendData.humidity,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        yAxisID: 'y',
+                        tension: 0.4,
+                    },
+                    {
+                        label: 'Rainfall (mm)',
+                        data: trendData.rainfall,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        yAxisID: 'y1',
+                        tension: 0.4,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Temperature (°C) / Humidity (%)'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Rainfall (mm)'
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    },
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

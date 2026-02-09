@@ -1,0 +1,205 @@
+{% load static %}
+{% extends 'base.html' %}
+
+{% block title %}Prediction Detail - {{ prediction.crop.name }} vs {{ prediction.pest.name }}{% endblock %}
+
+{% block content %}
+<div class="prediction-detail-page">
+    <div class="flex-between mb-3">
+        <h1><i class="fas fa-brain"></i> Risk Prediction Details</h1>
+        <div class="flex gap-2">
+            <a href="{% url 'alerts:get_recommendations' prediction.pk %}" class="btn btn-secondary">
+                <i class="fas fa-lightbulb"></i> Recommendations
+            </a>
+            <a href="{% url 'predictions:prediction_list' %}" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
+    
+    <!-- Main Prediction Info -->
+    <div class="card mb-3">
+        <div class="card-header">
+            <i class="fas fa-info-circle"></i> Prediction Summary
+        </div>
+        <div class="card-body">
+            <div class="grid grid-4 mb-3">
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.85rem;">Crop:</span>
+                    <h3 style="margin-top: 0.25rem; color: var(--success-color);">
+                        <i class="fas fa-seedling"></i> {{ prediction.crop.name }}
+                    </h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">
+                        {{ prediction.crop.get_crop_type_display }} • {{ prediction.crop.get_growth_stage_display }}
+                    </p>
+                </div>
+                
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.85rem;">Pest/Disease:</span>
+                    <h3 style="margin-top: 0.25rem; color: var(--danger-color);">
+                        <i class="fas fa-bug"></i> {{ prediction.pest.name }}
+                    </h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">
+                        {{ prediction.pest.get_pest_type_display }} • {{ prediction.pest.get_severity_level_display }} Severity
+                    </p>
+                </div>
+                
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.85rem;">Risk Score:</span>
+                    <h2 style="margin-top: 0.25rem; color: var(--danger-color);">{{ prediction.risk_score }}%</h2>
+                    <div style="background: var(--bg-primary); border-radius: 8px; height: 12px; overflow: hidden; margin-top: 0.5rem;">
+                        <div style="background: {% if prediction.risk_level == 'HIGH' %}var(--danger-color){% elif prediction.risk_level == 'MEDIUM' %}var(--warning-color){% else %}var(--success-color){% endif %}; height: 100%; width: {{ prediction.risk_score }}%; transition: width 1s ease;"></div>
+                    </div>
+                </div>
+                
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.85rem;">Risk Level:</span>
+                    <h3 style="margin-top: 0.25rem;">
+                        <span class="badge-pill badge-{% if prediction.risk_level == 'HIGH' %}danger{% elif prediction.risk_level == 'MEDIUM' %}warning{% else %}success{% endif %}" style="font-size: 1.2rem; padding: 0.5rem 1rem;">
+                            {{ prediction.get_risk_level_display }}
+                        </span>
+                    </h3>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem;">
+                        Confidence: {{ prediction.confidence }}%
+                    </p>
+                </div>
+            </div>
+            
+            <div style="padding: 1rem; background: var(--bg-primary); border-radius: 8px;">
+                <h4 style="margin-bottom: 0.5rem;"><i class="fas fa-calendar"></i> Prediction Date</h4>
+                <p style="color: var(--text-secondary); margin: 0;">{{ prediction.prediction_date|date:"F d, Y" }}</p>
+            </div>
+            
+            {% if prediction.contributing_factors %}
+                <div style="padding: 1rem; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border-left: 4px solid var(--info-color); margin-top: 1rem;">
+                    <h4 style="color: var(--info-color); margin-bottom: 0.5rem;">
+                        <i class="fas fa-list"></i> Contributing Factors
+                    </h4>
+                    <p style="color: var(--text-secondary); margin: 0;">{{ prediction.contributing_factors }}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Recent Weather Data -->
+    {% if recent_weather %}
+    <div class="card mb-3">
+        <div class="card-header">
+            <i class="fas fa-cloud-sun"></i> Recent Weather Conditions (Last 7 Days)
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Location</th>
+                        <th>Temp (°C)</th>
+                        <th>Humidity (%)</th>
+                        <th>Rainfall (mm)</th>
+                        <th>Wind (km/h)</th>
+                        <th>Risk Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for weather in recent_weather %}
+                        <tr>
+                            <td>{{ weather.date }}</td>
+                            <td>{{ weather.location }}</td>
+                            <td>{{ weather.temperature_avg }}</td>
+                            <td>{{ weather.humidity }}</td>
+                            <td>{{ weather.rainfall }}</td>
+                            <td>{{ weather.wind_speed }}</td>
+                            <td>
+                                {% if weather.is_high_risk_conditions %}
+                                    <span class="badge-pill badge-danger">High Risk</span>
+                                {% else %}
+                                    <span class="badge-pill badge-success">Normal</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Historical Infestation Records -->
+    {% if historical_records %}
+    <div class="card mb-3">
+        <div class="card-header">
+            <i class="fas fa-history"></i> Historical Infestation Records
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Severity</th>
+                        <th>Area Affected</th>
+                        <th>Treatment Applied</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in historical_records %}
+                        <tr>
+                            <td>{{ record.date }}</td>
+                            <td>
+                                <span class="badge-pill badge-{% if record.severity >= 7 %}danger{% elif record.severity >= 4 %}warning{% else %}info{% endif %}">
+                                    {{ record.severity }}/10
+                                </span>
+                            </td>
+                            <td>{{ record.area_affected }} hectares</td>
+                            <td>{{ record.treatment_applied|default:"None" }}</td>
+                            <td>{{ record.notes|truncatewords:10|default:"-" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+        <div class="card mb-3">
+            <div class="card-body" style="text-align: center; padding: 2rem;">
+                <i class="fas fa-history" style="font-size: 2.5rem; color: var(--text-muted); opacity: 0.3; margin-bottom: 1rem;"></i>
+                <p style="color: var(--text-muted);">No historical infestation records found for this crop-pest combination.</p>
+            </div>
+        </div>
+    {% endif %}
+    
+    <!-- Preventive Measures -->
+    {% if preventive_measures %}
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-shield-alt"></i> Available Preventive Measures
+        </div>
+        <div class="card-body">
+            <div class="grid grid-3">
+                {% for measure in preventive_measures %}
+                    <div style="padding: 1rem; background: var(--bg-primary); border-radius: 8px; border-left: 3px solid {% if measure.effectiveness == 'HIGH' %}var(--success-color){% elif measure.effectiveness == 'MEDIUM' %}var(--warning-color){% else %}var(--info-color){% endif %};">
+                        <div class="flex-between mb-2">
+                            <strong>{{ measure.measure_type }}</strong>
+                            <span class="badge-pill badge-{% if measure.effectiveness == 'HIGH' %}success{% elif measure.effectiveness == 'MEDIUM' %}warning{% else %}info{% endif %}">
+                                {{ measure.get_effectiveness_display }}
+                            </span>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.75rem;">
+                            {{ measure.description|truncatewords:15 }}
+                        </p>
+                        <div style="font-size: 0.85rem; color: var(--text-muted);">
+                            {{ measure.timing }} • {{ measure.get_cost_display }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="mt-3" style="text-align: center;">
+                <a href="{% url 'alerts:get_recommendations' prediction.pk %}" class="btn btn-primary">
+                    <i class="fas fa-lightbulb"></i> View Detailed Recommendations
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

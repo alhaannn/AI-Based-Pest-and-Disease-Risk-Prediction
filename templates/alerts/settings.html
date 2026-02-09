@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Alert Settings{% endblock %}
+
+{% block content %}
+<div class="alert-settings-page">
+    <h1><i class="fas fa-cog"></i> Alert Notification Settings</h1>
+    
+    <div class="card" style="max-width: 800px; margin: 2rem auto;">
+        <div class="card-header">
+            <i class="fas fa-envelope"></i> Email Notifications
+        </div>
+        <div class="card-body">
+            <div style="padding: 1.5rem; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border-left: 4px solid var(--info-color); margin-bottom: 1.5rem;">
+                <h4 style="color: var(--info-color); margin-bottom: 0.5rem;">
+                    <i class="fas fa-info-circle"></i> Coming Soon
+                </h4>
+                <p style="color: var(--text-secondary); margin: 0;">
+                    Email and SMS notifications will be available in a future update. Currently, you can view alerts in the dashboard and alert center.
+                </p>
+            </div>
+            
+            <div style="opacity: 0.5; pointer-events: none;">
+                <div class="form-group">
+                    <label class="form-label">
+                        <input type="checkbox" {% if email_enabled %}checked{% endif %} disabled>
+                        Enable Email Notifications
+                    </label>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-control" placeholder="your@email.com" disabled>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Notification Frequency</label>
+                    <select class="form-control" disabled>
+                        <option>Immediate (as they occur)</option>
+                        <option>Daily Digest</option>
+                        <option>Weekly Summary</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Minimum Severity</label>
+                    <select class="form-control" disabled>
+                        <option>All Alerts</option>
+                        <option>Warning and Above</option>
+                        <option>Danger and Above</option>
+                        <option>Critical Only</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card" style="max-width: 800px; margin: 2rem auto;">
+        <div class="card-header">
+            <i class="fas fa-sms"></i> SMS Notifications
+        </div>
+        <div class="card-body">
+            <div style="padding: 1.5rem; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border-left: 4px solid var(--info-color);">
+                <h4 style="color: var(--info-color); margin-bottom: 0.5rem;">
+                    <i class="fas fa-info-circle"></i> Coming Soon
+                </h4>
+                <p style="color: var(--text-secondary); margin: 0;">
+                    SMS notifications for critical alerts will be available in a future update.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card" style="max-width: 800px; margin: 2rem auto;">
+        <div class="card-header">
+            <i class="fas fa-check-circle"></i> Current Features
+        </div>
+        <div class="card-body">
+            <h4 style="margin-bottom: 1rem;">Available Now:</h4>
+            <div class="grid grid-2">
+                <div style="padding: 1rem; background: var(--bg-primary); border-radius: 8px;">
+                    <h5 style="color: var(--success-color); margin-bottom: 0.5rem;">
+                        <i class="fas fa-bell"></i> Alert Dashboard
+                    </h5>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+                        View all alerts with statistics and charts
+                    </p>
+                </div>
+                
+                <div style="padding: 1rem; background: var(--bg-primary); border-radius: 8px;">
+                    <h5 style="color: var(--success-color); margin-bottom: 0.5rem;">
+                        <i class="fas fa-filter"></i> Filtering
+                    </h5>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+                        Filter by status, severity, and more
+                    </p>
+                </div>
+                
+                <div style="padding: 1rem; background: var(--bg-primary); border-radius: 8px;">
+                    <h5 style="color: var(--success-color); margin-bottom: 0.5rem;">
+                        <i class="fas fa-lightbulb"></i> Recommendations
+                    </h5>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+                        Get preventive measure suggestions
+                    </p>
+                </div>
+                
+                <div style="padding: 1rem; background: var(--bg-primary); border-radius: 8px;">
+                    <h5 style="color: var(--success-color); margin-bottom: 0.5rem;">
+                        <i class="fas fa-magic"></i> Auto-Generation
+                    </h5>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+                        Alerts created automatically from predictions
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="flex gap-2" style="max-width: 800px; margin: 2rem auto;">
+        <a href="{% url 'alerts:alert_dashboard' %}" class="btn btn-outline">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

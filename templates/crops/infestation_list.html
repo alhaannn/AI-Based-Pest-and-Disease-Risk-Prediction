@@ -1,0 +1,91 @@
+{% load static %}
+{% extends 'base.html' %}
+
+{% block title %}Infestation Records - Pest & Disease Risk Prediction{% endblock %}
+
+{% block content %}
+<div class="infestations-page">
+    <div class="flex-between mb-3">
+        <h1><i class="fas fa-file-medical"></i> Infestation Records</h1>
+        <a href="{% url 'crops:infestation_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Log New Infestation
+        </a>
+    </div>
+    
+    <!-- Filters -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" class="flex gap-2">
+                <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                    <select name="crop" class="form-control">
+                        <option value="">All Crops</option>
+                        {% for crop in crops %}
+                            <option value="{{ crop.pk }}">{{ crop.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                    <select name="pest" class="form-control">
+                        <option value="">All Pests</option>
+                        {% for pest in pests %}
+                            <option value="{{ pest.pk }}">{{ pest.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filter</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Records Table -->
+    <div class="card">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Crop</th>
+                        <th>Pest</th>
+                        <th>Severity</th>
+                        <th>Area Affected</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                        <tr>
+                            <td>{{ record.date }}</td>
+                            <td>{{ record.crop.name }}</td>
+                            <td>{{ record.pest.name }}</td>
+                            <td>
+                                <span class="badge-pill badge-{% if record.severity >= 4 %}danger{% elif record.severity >= 3 %}warning{% else %}info{% endif %}">
+                                    {{ record.get_severity_display }}
+                                </span>
+                            </td>
+                            <td>{{ record.area_affected }} ha</td>
+                            <td>
+                                <a href="{% url 'crops:infestation_update' record.pk %}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'crops:infestation_delete' record.pk %}" class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="return confirm('Delete this record?');">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                                <i class="fas fa-file-medical" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                                <p>No infestation records found.</p>
+                                <a href="{% url 'crops:infestation_create' %}" class="btn btn-primary mt-2">
+                                    <i class="fas fa-plus"></i> Log Infestation
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

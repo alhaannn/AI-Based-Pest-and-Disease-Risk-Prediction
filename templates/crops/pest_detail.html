@@ -1,0 +1,122 @@
+{% load static %}
+{% extends 'base.html' %}
+
+{% block title %}{{ pest.name }} - Pest & Disease Risk Prediction{% endblock %}
+
+{% block content %}
+<div class="pest-detail-page">
+    <div class="flex-between mb-3">
+        <h1><i class="fas fa-bug"></i> {{ pest.name }}</h1>
+        <div class="flex gap-1">
+            <a href="{% url 'crops:pest_update' pest.pk %}" class="btn btn-secondary">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{% url 'crops:pest_delete' pest.pk %}" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this pest?');">
+                <i class="fas fa-trash"></i> Delete
+            </a>
+        </div>
+    </div>
+    
+    <div class="grid grid-2 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-info-circle"></i> Pest Information
+            </div>
+            <div class="card-body">
+                <table style="width: 100%;">
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.75rem; font-weight: 600;">Type:</td>
+                        <td style="padding: 0.75rem;">{{ pest.get_pest_type_display }}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.75rem; font-weight: 600;">Severity:</td>
+                        <td style="padding: 0.75rem;">
+                            <span class="badge-pill badge-{% if pest.severity_level == 'CRITICAL' %}danger{% elif pest.severity_level == 'HIGH' %}warning{% else %}info{% endif %}">
+                                {{ pest.get_severity_level_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0.75rem; font-weight: 600; vertical-align: top;">Description:</td>
+                        <td style="padding: 0.75rem;">{{ pest.description }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-shield-alt"></i> Preventive Measures
+            </div>
+            <div class="card-body">
+                {% if preventive_measures %}
+                    {% for measure in preventive_measures %}
+                        <div style="padding: 0.75rem; background: var(--bg-primary); border-radius: 8px; margin-bottom: 0.75rem;">
+                            <div class="flex-between mb-1">
+                                <strong>{{ measure.action }}</strong>
+                                <span class="badge-pill badge-success">{{ measure.get_effectiveness_display }}</span>
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+                                {{ measure.description }}
+                            </p>
+                            {% if measure.timing %}
+                                <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">
+                                    <i class="fas fa-clock"></i> {{ measure.timing }}
+                                </p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: var(--text-muted); text-align: center; padding: 2rem;">
+                        No preventive measures recorded
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-history"></i> Recent Infestation Records
+        </div>
+        <div class="card-body">
+            {% if records %}
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Crop</th>
+                                <th>Date</th>
+                                <th>Severity</th>
+                                <th>Area Affected</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in records %}
+                                <tr>
+                                    <td>{{ record.crop.name }}</td>
+                                    <td>{{ record.date }}</td>
+                                    <td>
+                                        <span class="badge-pill badge-{% if record.severity >= 4 %}danger{% elif record.severity >= 3 %}warning{% else %}info{% endif %}">
+                                            {{ record.get_severity_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ record.area_affected }} ha</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p style="color: var(--text-muted); text-align: center; padding: 2rem;">
+                    No infestation records found
+                </p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <a href="{% url 'crops:pest_list' %}" class="btn btn-outline mt-3">
+        <i class="fas fa-arrow-left"></i> Back to Pests
+    </a>
+</div>
+{% endblock %}

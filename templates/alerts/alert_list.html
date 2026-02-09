@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Alerts - Pest & Disease Risk Prediction{% endblock %}
+
+{% block content %}
+<div class="alerts-page">
+    <div class="flex-between mb-3">
+        <h1><i class="fas fa-bell"></i> Alert Center</h1>
+        <div class="flex gap-2">
+            <a href="{% url 'alerts:alert_dashboard' %}" class="btn btn-secondary">
+                <i class="fas fa-chart-bar"></i> Dashboard
+            </a>
+            <a href="{% url 'alerts:preventive_measures' %}" class="btn btn-secondary">
+                <i class="fas fa-shield-alt"></i> Preventive Measures
+            </a>
+            <form method="post" action="{% url 'alerts:mark_all_as_read' %}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary" onclick="return confirm('Mark all alerts as read?');">
+                    <i class="fas fa-check-double"></i> Mark All Read
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Statistics -->
+    <div class="grid grid-4 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-bell"></i></div>
+            <div class="stat-value">{{ summary.total }}</div>
+            <div class="stat-label">Total Alerts</div>
+        </div>
+        
+        <div class="stat-card info">
+            <div class="stat-icon"><i class="fas fa-envelope"></i></div>
+            <div class="stat-value">{{ summary.unread }}</div>
+            <div class="stat-label">Unread</div>
+        </div>
+        
+        <div class="stat-card danger">
+            <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="stat-value">{{ summary.critical }}</div>
+            <div class="stat-label">Critical</div>
+        </div>
+        
+        <div class="stat-card success">
+            <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+            <div class="stat-value">{{ summary.total|add:"-"|add:summary.unread }}</div>
+            <div class="stat-label">Read</div>
+        </div>
+    </div>
+    
+    <!-- Filters -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" class="flex gap-2">
+                <div class="form-group" style="flex: 0 0 200px; margin-bottom: 0;">
+                    <select name="status" class="form-control">
+                        <option value="">All Status</option>
+                        <option value="unread" {% if status == 'unread' %}selected{% endif %}>Unread Only</option>
+                        <option value="read" {% if status == 'read' %}selected{% endif %}>Read Only</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex: 0 0 200px; margin-bottom: 0;">
+                    <select name="severity" class="form-control">
+                        <option value="">All Severity</option>
+                        <option value="CRITICAL" {% if severity == 'CRITICAL' %}selected{% endif %}>Critical</option>
+                        <option value="DANGER" {% if severity == 'DANGER' %}selected{% endif %}>Danger</option>
+                        <option value="WARNING" {% if severity == 'WARNING' %}selected{% endif %}>Warning</option>
+                        <option value="INFO" {% if severity == 'INFO' %}selected{% endif %}>Info</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filter</button>
+                {% if status or severity %}
+                    <a href="{% url 'alerts:alert_list' %}" class="btn btn-outline">
+                        <i class="fas fa-times"></i> Clear
+                    </a>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+    
+    <!-- Alerts List -->
+    <div class="card">
+        <div class="card-header flex-between">
+            <span><i class="fas fa-list"></i> Alerts</span>
+            <span style="color: var(--text-muted); font-size: 0.9rem;">Showing latest 50 alerts</span>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            {% for alert in alerts %}
+                <div style="padding: 1.25rem; border-bottom: 1px solid var(--border-color); {% if not alert.is_read %}background: rgba(59, 130, 246, 0.05);{% endif %}">
+                    <div class="flex-between mb-2">
+                        <div class="flex gap-2" style="align-items: center;">
+                            {% if not alert.is_read %}
+                                <div style="width: 8px; height: 8px; background: var(--primary-color); border-radius: 50%;"></div>
+                            {% endif %}
+                            <span class="badge-pill badge-{% if alert.severity == 'CRITICAL' %}danger{% elif alert.severity == 'DANGER' %}danger{% elif alert.severity == 'WARNING' %}warning{% else %}info{% endif %}">
+                                {{ alert.severity }}
+                            </span>
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">
+                                {{ alert.created_at|date:"M d, Y H:i" }}
+                            </span>
+                        </div>
+                        <div class="flex gap-1">
+                            {% if alert.prediction %}
+                                <a href="{% url 'alerts:get_recommendations' alert.prediction.pk %}" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+                                    <i class="fas fa-lightbulb"></i> Recommendations
+                                </a>
+                            {% endif %}
+                            {% if not alert.is_read %}
+                                <a href="{% url 'alerts:mark_as_read' alert.pk %}" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+                                    <i class="fas fa-check"></i> Mark Read
+                                </a>
+                            {% endif %}
+                            <a href="{% url 'alerts:delete_alert' alert.pk %}" class="btn btn-danger" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;" onclick="return confirm('Delete this alert?');">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <p style="margin-bottom: 0.75rem; font-size: 1rem;">{{ alert.message }}</p>
+                    
+                    {% if alert.prediction %}
+                        <div style="padding: 0.75rem; background: var(--bg-primary); border-radius: 8px; display: flex; gap: 2rem; flex-wrap: wrap;">
+                            <div>
+                                <span style="color: var(--text-muted); font-size: 0.85rem;">Crop:</span>
+                                <strong style="margin-left: 0.5rem;">{{ alert.prediction.crop.name }}</strong>
+                            </div>
+                            <div>
+                                <span style="color: var(--text-muted); font-size: 0.85rem;">Pest:</span>
+                                <strong style="margin-left: 0.5rem;">{{ alert.prediction.pest.name }}</strong>
+                            </div>
+                            <div>
+                                <span style="color: var(--text-muted); font-size: 0.85rem;">Risk Score:</span>
+                                <strong style="margin-left: 0.5rem; color: var(--danger-color);">{{ alert.prediction.risk_score }}%</strong>
+                            </div>
+                            <div>
+                                <span style="color: var(--text-muted); font-size: 0.85rem;">Confidence:</span>
+                                <strong style="margin-left: 0.5rem;">{{ alert.prediction.confidence }}%</strong>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            {% empty %}
+                <div style="text-align: center; padding: 4rem; color: var(--text-muted);">
+                    <i class="fas fa-bell-slash" style="font-size: 4rem; margin-bottom: 1.5rem; opacity: 0.3;"></i>
+                    <h3 style="margin-bottom: 0.5rem;">No Alerts</h3>
+                    <p>No alerts match your current filters.</p>
+                    {% if status or severity %}
+                        <a href="{% url 'alerts:alert_list' %}" class="btn btn-primary mt-2">
+                            <i class="fas fa-times"></i> Clear Filters
+                        </a>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Crops - Pest & Disease Risk Prediction{% endblock %}
+
+{% block content %}
+<div class="crops-page">
+    <div class="flex-between mb-3">
+        <h1><i class="fas fa-seedling"></i> Crop Management</h1>
+        <a href="{% url 'crops:crop_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add New Crop
+        </a>
+    </div>
+    
+    <!-- Search and Filters -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" class="flex gap-2">
+                <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                    <input type="text" name="search" class="form-control" placeholder="Search crops..." value="{{ search_query }}">
+                </div>
+                <div class="form-group" style="flex: 0 0 200px; margin-bottom: 0;">
+                    <select name="crop_type" class="form-control">
+                        <option value="">All Types</option>
+                        {% for type_code, type_name in crop_types %}
+                            <option value="{{ type_code }}" {% if crop_type == type_code %}selected{% endif %}>{{ type_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Filter</button>
+                {% if search_query or crop_type %}
+                    <a href="{% url 'crops:crop_list' %}" class="btn btn-outline"><i class="fas fa-times"></i> Clear</a>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+    
+    <!-- Crops Table -->
+    <div class="card">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Growth Stage</th>
+                        <th>Planting Date</th>
+                        <th>Location</th>
+                        <th>Area (ha)</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for crop in crops %}
+                        <tr>
+                            <td><strong>{{ crop.name }}</strong></td>
+                            <td><span class="badge-pill badge-info">{{ crop.get_crop_type_display }}</span></td>
+                            <td>{{ crop.get_growth_stage_display }}</td>
+                            <td>{{ crop.planting_date }}</td>
+                            <td>{{ crop.field_location }}</td>
+                            <td>{{ crop.area_hectares }}</td>
+                            <td>
+                                <a href="{% url 'crops:crop_detail' crop.pk %}" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'crops:crop_update' crop.pk %}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                                <i class="fas fa-seedling" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                                <p>No crops found. Start by adding your first crop!</p>
+                                <a href="{% url 'crops:crop_create' %}" class="btn btn-primary mt-2">
+                                    <i class="fas fa-plus"></i> Add Crop
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - Pest & Disease Risk Prediction{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+    <h1 class="mb-3">
+        <i class="fas fa-chart-line"></i> Risk Prediction Dashboard
+    </h1>
+    
+    <!-- Statistics Cards -->
+    <div class="grid grid-4 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-seedling"></i></div>
+            <div class="stat-value">{{ total_crops }}</div>
+            <div class="stat-label">Total Crops</div>
+        </div>
+        
+        <div class="stat-card warning">
+            <div class="stat-icon"><i class="fas fa-bug"></i></div>
+            <div class="stat-value">{{ total_pests }}</div>
+            <div class="stat-label">Registered Pests</div>
+        </div>
+        
+        <div class="stat-card danger">
+            <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="stat-value">{{ high_risk_count }}</div>
+            <div class="stat-label">High Risk (7 Days)</div>
+        </div>
+        
+        <div class="stat-card info">
+            <div class="stat-icon"><i class="fas fa-bell"></i></div>
+            <div class="stat-value">{{ unread_alerts }}</div>
+            <div class="stat-label">Unread Alerts</div>
+        </div>
+    </div>
+    
+    <!-- Charts Row -->
+    <div class="grid grid-2 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-chart-bar"></i> Risk Trend (Last 30 Days)
+            </div>
+            <div class="card-body">
+                <canvas id="riskTrendChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-chart-pie"></i> Pest Distribution by Type
+            </div>
+            <div class="card-body">
+                <canvas id="pestDistributionChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Predictions & Alerts -->
+    <div class="grid grid-2">
+        <div class="card">
+            <div class="card-header flex-between">
+                <span><i class="fas fa-brain"></i> Recent High-Risk Predictions</span>
+                <a href="{% url 'predictions:prediction_list' %}" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">View All</a>
+            </div>
+            <div class="card-body">
+                {% if recent_predictions %}
+                    <div style="space-y: 0.75rem;">
+                        {% for prediction in recent_predictions %}
+                            <div class="prediction-item" style="padding: 1rem; background: var(--bg-primary); border-radius: 8px; margin-bottom: 0.75rem; border-left: 3px solid {% if prediction.risk_level == 'HIGH' %}var(--danger-color){% elif prediction.risk_level == 'MEDIUM' %}var(--warning-color){% else %}var(--success-color){% endif %};">
+                                <div class="flex-between mb-1">
+                                    <strong>{{ prediction.pest.name }}</strong>
+                                    <span class="badge-pill badge-{% if prediction.risk_level == 'HIGH' %}danger{% elif prediction.risk_level == 'MEDIUM' %}warning{% else %}success{% endif %}">
+                                        {{ prediction.risk_score }}%
+                                    </span>
+                                </div>
+                                <div style="color: var(--text-muted); font-size: 0.85rem;">
+                                    <i class="fas fa-seedling"></i> {{ prediction.crop.name }}
+                                    <span style="margin-left: 1rem;"><i class="fas fa-calendar"></i> {{ prediction.prediction_date }}</span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p style="color: var(--text-muted); text-align: center; padding: 2rem;">
+                        <i class="fas fa-info-circle"></i> No predictions yet. Start by adding crops and pests data.
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header flex-between">
+                <span><i class="fas fa-bell"></i> Recent Alerts</span>
+                <a href="{% url 'alerts:alert_list' %}" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">View All</a>
+            </div>
+            <div class="card-body">
+                {% if recent_alerts %}
+                    <div>
+                        {% for alert in recent_alerts %}
+                            <div class="alert-item" style="padding: 1rem; background: var(--bg-primary); border-radius: 8px; margin-bottom: 0.75rem; border-left: 3px solid {% if alert.severity == 'CRITICAL' %}#dc2626{% elif alert.severity == 'DANGER' %}var(--danger-color){% elif alert.severity == 'WARNING' %}var(--warning-color){% else %}var(--info-color){% endif %};">
+                                <div class="flex-between mb-1">
+                                    <strong style="color: {% if alert.severity == 'CRITICAL' %}#dc2626{% elif alert.severity == 'DANGER' %}var(--danger-color){% elif alert.severity == 'WARNING' %}var(--warning-color){% else %}var(--info-color){% endif %};">
+                                        <i class="fas fa-exclamation-circle"></i> {{ alert.severity }}
+                                    </strong>
+                                    <span style="font-size: 0.8rem; color: var(--text-muted);">{{ alert.created_at|date:"M d, H:i" }}</span>
+                                </div>
+                                <div style="font-size: 0.9rem; color: var(--text-secondary);">{{ alert.message|truncatewords:20 }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p style="color: var(--text-muted); text-align: center; padding: 2rem;">
+                        <i class="fas fa-check-circle"></i> No alerts at this time. All clear!
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="card mt-3">
+        <div class="card-header">
+            <i class="fas fa-bolt"></i> Quick Actions
+        </div>
+        <div class="card-body">
+            <div class="flex gap-2">
+                <a href="{% url 'crops:crop_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Crop
+                </a>
+                <a href="{% url 'crops:pest_create' %}" class="btn btn-secondary">
+                    <i class="fas fa-bug"></i> Add Pest
+                </a>
+                <a href="{% url 'crops:infestation_create' %}" class="btn btn-outline">
+                    <i class="fas fa-file-medical"></i> Log Infestation
+                </a>
+                <a href="{% url 'weather:weather_create' %}" class="btn btn-outline">
+                    <i class="fas fa-cloud-sun"></i> Add Weather Data
+                </a>
+                <a href="{% url 'predictions:generate_predictions' %}" class="btn btn-outline">
+                    <i class="fas fa-magic"></i> Generate Predictions
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Risk Trend Chart
+    const riskTrendCtx = document.getElementById('riskTrendChart');
+    if (riskTrendCtx) {
+        const riskTrendData = {{ risk_trend|safe }};
+        
+        new Chart(riskTrendCtx, {
+            type: 'line',
+            data: {
+                labels: riskTrendData.map(d => d.date),
+                datasets: [{
+                    label: 'High Risk Predictions',
+                    data: riskTrendData.map(d => d.count),
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Pest Distribution Chart
+    const pestDistCtx = document.getElementById('pestDistributionChart');
+    if (pestDistCtx) {
+        const pestDistData = {{ pest_distribution|safe }};
+        
+        new Chart(pestDistCtx, {
+            type: 'doughnut',
+            data: {
+                labels: pestDistData.map(d => d.pest_type),
+                datasets: [{
+                    data: pestDistData.map(d => d.count),
+                    backgroundColor: [
+                        '#10b981',
+                        '#3b82f6',
+                        '#f59e0b',
+                        '#ef4444',
+                        '#8b5cf6',
+                        '#ec4899',
+                    ],
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

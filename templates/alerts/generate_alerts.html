@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Generate Alerts{% endblock %}
+
+{% block content %}
+<div class="generate-alerts-page">
+    <h1><i class="fas fa-bell"></i> Generate Alerts from Predictions</h1>
+    
+    <div class="card" style="max-width: 800px; margin: 2rem auto;">
+        <div class="card-header">
+            <i class="fas fa-magic"></i> Alert Generation
+        </div>
+        <div class="card-body">
+            <div style="padding: 1.5rem; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border-left: 4px solid var(--info-color); margin-bottom: 1.5rem;">
+                <h4 style="color: var(--info-color); margin-bottom: 0.5rem;">
+                    <i class="fas fa-info-circle"></i> What This Does
+                </h4>
+                <p style="color: var(--text-secondary); margin: 0;">
+                    This will scan all high-risk predictions from today and automatically create alerts for any that don't already have one.
+                </p>
+            </div>
+            
+            <div style="padding: 1.5rem; background: var(--bg-primary); border-radius: 8px; margin-bottom: 1.5rem;">
+                <div class="flex-between" style="align-items: center;">
+                    <div>
+                        <h4 style="margin-bottom: 0.5rem;">Potential New Alerts</h4>
+                        <p style="color: var(--text-muted); margin: 0;">Based on today's high-risk predictions</p>
+                    </div>
+                    <div style="font-size: 3rem; font-weight: 700; color: var(--primary-color);">
+                        {{ potential_alerts }}
+                    </div>
+                </div>
+            </div>
+            
+            {% if potential_alerts > 0 %}
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
+                        <i class="fas fa-bell"></i> Generate {{ potential_alerts }} Alert{{ potential_alerts|pluralize }}
+                    </button>
+                </form>
+            {% else %}
+                <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                    <i class="fas fa-check-circle" style="font-size: 3rem; color: var(--success-color); margin-bottom: 1rem;"></i>
+                    <p>No new high-risk predictions found. All alerts are up to date!</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="card" style="max-width: 800px; margin: 2rem auto;">
+        <div class="card-header">
+            <i class="fas fa-lightbulb"></i> Tips
+        </div>
+        <div class="card-body">
+            <ul style="color: var(--text-secondary); padding-left: 1.5rem;">
+                <li style="margin-bottom: 0.75rem;">Alerts are automatically generated when you create predictions</li>
+                <li style="margin-bottom: 0.75rem;">Use this feature if you manually added predictions through the admin panel</li>
+                <li style="margin-bottom: 0.75rem;">Only HIGH risk predictions trigger alerts</li>
+                <li>Duplicate alerts are automatically prevented</li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="flex gap-2" style="max-width: 800px; margin: 2rem auto;">
+        <a href="{% url 'alerts:alert_dashboard' %}" class="btn btn-outline">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+        <a href="{% url 'predictions:generate_predictions' %}" class="btn btn-secondary">
+            <i class="fas fa-brain"></i> Generate Predictions
+        </a>
+    </div>
+</div>
+{% endblock %}

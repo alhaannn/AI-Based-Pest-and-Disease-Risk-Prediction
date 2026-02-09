@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ action }} Weather Data{% endblock %}
+
+{% block content %}
+<div class="weather-form-page">
+    <h1><i class="fas fa-cloud-sun"></i> {{ action }} Weather Data</h1>
+    
+    <div class="card" style="max-width: 900px; margin: 2rem auto;">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="grid grid-2">
+                    {% for field in form %}
+                        <div class="form-group">
+                            <label class="form-label">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <div style="color: var(--danger-color); font-size: 0.85rem; margin-top: 0.25rem;">
+                                    {{ field.errors }}
+                                </div>
+                            {% endif %}
+                            {% if field.help_text %}
+                                <small style="color: var(--text-muted); font-size: 0.85rem;">{{ field.help_text }}</small>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="flex gap-2 mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Weather Data
+                    </button>
+                    <a href="{% url 'weather:weather_dashboard' %}" class="btn btn-outline">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Help Section -->
+    <div class="card" style="max-width: 900px; margin: 2rem auto;">
+        <div class="card-header">
+            <i class="fas fa-info-circle"></i> Data Entry Tips
+        </div>
+        <div class="card-body">
+            <ul style="color: var(--text-secondary); padding-left: 1.5rem;">
+                <li>Temperature should be in Celsius (°C)</li>
+                <li>Humidity should be a percentage between 0-100</li>
+                <li>Rainfall should be in millimeters (mm)</li>
+                <li>Wind speed should be in kilometers per hour (km/h)</li>
+                <li>Soil moisture is optional and should be a percentage</li>
+            </ul>
+            <p style="color: var(--text-muted); margin-top: 1rem;">
+                <strong>High Risk Conditions:</strong> Temperature 20-30°C + Humidity >70% + Rainfall >5mm
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

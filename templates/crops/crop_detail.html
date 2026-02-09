@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ crop.name }} - Pest & Disease Risk Prediction{% endblock %}
+
+{% block content %}
+<div class="crop-detail-page">
+    <div class="flex-between mb-3">
+        <h1><i class="fas fa-seedling"></i> {{ crop.name }}</h1>
+        <div class="flex gap-1">
+            <a href="{% url 'crops:crop_update' crop.pk %}" class="btn btn-secondary">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{% url 'crops:crop_delete' crop.pk %}" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this crop?');">
+                <i class="fas fa-trash"></i> Delete
+            </a>
+        </div>
+    </div>
+    
+    <div class="grid grid-2 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-info-circle"></i> Crop Information
+            </div>
+            <div class="card-body">
+                <table style="width: 100%;">
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.75rem; font-weight: 600;">Type:</td>
+                        <td style="padding: 0.75rem;">{{ crop.get_crop_type_display }}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.75rem; font-weight: 600;">Growth Stage:</td>
+                        <td style="padding: 0.75rem;">{{ crop.get_growth_stage_display }}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.75rem; font-weight: 600;">Planting Date:</td>
+                        <td style="padding: 0.75rem;">{{ crop.planting_date }}</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.75rem; font-weight: 600;">Field Location:</td>
+                        <td style="padding: 0.75rem;">{{ crop.field_location }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0.75rem; font-weight: 600;">Area:</td>
+                        <td style="padding: 0.75rem;">{{ crop.area_hectares }} hectares</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-bug"></i> Recent Infestations
+            </div>
+            <div class="card-body">
+                {% if infestations %}
+                    {% for infestation in infestations %}
+                        <div style="padding: 0.75rem; background: var(--bg-primary); border-radius: 8px; margin-bottom: 0.75rem;">
+                            <div class="flex-between">
+                                <strong>{{ infestation.pest.name }}</strong>
+                                <span class="badge-pill badge-{% if infestation.severity >= 4 %}danger{% elif infestation.severity >= 3 %}warning{% else %}info{% endif %}">
+                                    Severity: {{ infestation.severity }}
+                                </span>
+                            </div>
+                            <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem;">
+                                {{ infestation.date }} • {{ infestation.area_affected }} ha affected
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: var(--text-muted); text-align: center; padding: 2rem;">
+                        No infestations recorded
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <a href="{% url 'crops:crop_list' %}" class="btn btn-outline">
+        <i class="fas fa-arrow-left"></i> Back to Crops
+    </a>
+</div>
+{% endblock %}

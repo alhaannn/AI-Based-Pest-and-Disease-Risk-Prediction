@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Import Weather Data{% endblock %}
+
+{% block content %}
+<div class="weather-import-page">
+    <h1><i class="fas fa-file-import"></i> Import Weather Data from CSV</h1>
+    
+    <div class="grid grid-2" style="max-width: 1200px; margin: 2rem auto;">
+        <!-- Import Form -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-upload"></i> Upload CSV File
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    {% for field in form %}
+                        <div class="form-group">
+                            <label class="form-label">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.errors %}
+                                <div style="color: var(--danger-color); font-size: 0.85rem; margin-top: 0.25rem;">
+                                    {{ field.errors }}
+                                </div>
+                            {% endif %}
+                            {% if field.help_text %}
+                                <small style="color: var(--text-muted); font-size: 0.85rem;">{{ field.help_text }}</small>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    
+                    <div class="flex gap-2 mt-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> Import Data
+                        </button>
+                        <a href="{% url 'weather:weather_dashboard' %}" class="btn btn-outline">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Instructions -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-info-circle"></i> CSV Format Instructions
+            </div>
+            <div class="card-body">
+                <h4 style="margin-bottom: 1rem;">Required Columns:</h4>
+                <ul style="color: var(--text-secondary); padding-left: 1.5rem; margin-bottom: 1.5rem;">
+                    <li><strong>date</strong> - Format: YYYY-MM-DD (e.g., 2026-02-06)</li>
+                    <li><strong>location</strong> - Location name or description</li>
+                    <li><strong>temperature_avg</strong> - Average temperature in °C</li>
+                    <li><strong>humidity</strong> - Humidity percentage (0-100)</li>
+                    <li><strong>rainfall</strong> - Rainfall in mm (optional, defaults to 0)</li>
+                    <li><strong>wind_speed</strong> - Wind speed in km/h (optional, defaults to 0)</li>
+                </ul>
+                
+                <h4 style="margin-bottom: 0.5rem;">Example CSV:</h4>
+                <div style="padding: 1rem; background: var(--bg-primary); border-radius: 8px; font-family: monospace; font-size: 0.85rem; overflow-x: auto;">
+                    <pre style="margin: 0; color: var(--text-secondary);">date,location,temperature_avg,humidity,rainfall,wind_speed
+2026-02-01,North Field,25.5,75,12.3,15.2
+2026-02-02,North Field,26.0,72,8.5,12.0
+2026-02-03,North Field,24.8,78,15.0,18.5</pre>
+                </div>
+                
+                <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(59, 130, 246, 0.1); border-left: 4px solid var(--info-color); border-radius: 8px;">
+                    <p style="margin: 0; color: var(--text-secondary);">
+                        <i class="fas fa-lightbulb"></i> <strong>Tip:</strong> Ensure your CSV file is UTF-8 encoded and has headers as shown above.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

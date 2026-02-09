@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Generate AI Predictions{% endblock %}
+
+{% block content %}
+<div class="generate-predictions-page">
+    <h1><i class="fas fa-magic"></i> Generate AI Risk Predictions</h1>
+    
+    <!-- Data Availability Status -->
+    <div class="grid grid-4 mb-3">
+        <div class="stat-card {% if total_crops > 0 %}success{% else %}danger{% endif %}">
+            <div class="stat-icon"><i class="fas fa-seedling"></i></div>
+            <div class="stat-value">{{ total_crops }}</div>
+            <div class="stat-label">Crops in Database</div>
+        </div>
+        
+        <div class="stat-card {% if total_pests > 0 %}success{% else %}danger{% endif %}">
+            <div class="stat-icon"><i class="fas fa-bug"></i></div>
+            <div class="stat-value">{{ total_pests }}</div>
+            <div class="stat-label">Pests in Database</div>
+        </div>
+        
+        <div class="stat-card {% if recent_weather > 0 %}success{% else %}warning{% endif %}">
+            <div class="stat-icon"><i class="fas fa-cloud-sun"></i></div>
+            <div class="stat-value">{{ recent_weather }}</div>
+            <div class="stat-label">Weather Records (7 days)</div>
+        </div>
+        
+        <div class="stat-card {% if historical_records > 0 %}success{% else %}info{% endif %}">
+            <div class="stat-icon"><i class="fas fa-history"></i></div>
+            <div class="stat-value">{{ historical_records }}</div>
+            <div class="stat-label">Historical Infestations</div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="grid grid-2" style="max-width: 1200px; margin: 0 auto;">
+        <!-- Generation Form -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-robot"></i> AI Prediction Engine
+            </div>
+            <div class="card-body">
+                {% if has_sufficient_data %}
+                    <div style="padding: 1.5rem; background: rgba(16, 185, 129, 0.1); border-radius: 8px; border-left: 4px solid var(--success-color); margin-bottom: 1.5rem;">
+                        <h4 style="color: var(--success-color); margin-bottom: 0.5rem;">
+                            <i class="fas fa-check-circle"></i> Ready to Generate
+                        </h4>
+                        <p style="color: var(--text-secondary); margin: 0;">
+                            Sufficient data available. The AI engine will analyze all crop-pest combinations using weather conditions and historical patterns.
+                        </p>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <h4 style="margin-bottom: 1rem;">What will happen:</h4>
+                        <ul style="color: var(--text-secondary); padding-left: 1.5rem; margin-bottom: 1.5rem;">
+                            <li>Analyze {{ total_crops }} crops × {{ total_pests }} pests = {{ total_combinations }} combinations</li>
+                            <li>Consider recent weather conditions (last 7 days)</li>
+                            <li>Review historical infestation patterns</li>
+                            <li>Calculate risk scores using ML algorithms</li>
+                            <li>Generate confidence levels for each prediction</li>
+                            <li>Auto-create alerts for high-risk scenarios</li>
+                        </ul>
+                        
+                        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
+                            <i class="fas fa-magic"></i> Generate Predictions Now
+                        </button>
+                    </form>
+                {% else %}
+                    <div style="padding: 1.5rem; background: rgba(239, 68, 68, 0.1); border-radius: 8px; border-left: 4px solid var(--danger-color); margin-bottom: 1.5rem;">
+                        <h4 style="color: var(--danger-color); margin-bottom: 0.5rem;">
+                            <i class="fas fa-exclamation-triangle"></i> Insufficient Data
+                        </h4>
+                        <p style="color: var(--text-secondary); margin: 0;">
+                            You need at least one crop and one pest in the database to generate predictions.
+                        </p>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        {% if total_crops == 0 %}
+                            <a href="{% url 'crops:crop_create' %}" class="btn btn-primary" style="flex: 1;">
+                                <i class="fas fa-plus"></i> Add Crop
+                            </a>
+                        {% endif %}
+                        {% if total_pests == 0 %}
+                            <a href="{% url 'crops:pest_create' %}" class="btn btn-primary" style="flex: 1;">
+                                <i class="fas fa-plus"></i> Add Pest
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- How It Works -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-info-circle"></i> How AI Predictions Work
+            </div>
+            <div class="card-body">
+                <h4 style="margin-bottom: 1rem;">Machine Learning Features:</h4>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <h5 style="color: var(--primary-color); margin-bottom: 0.5rem;">
+                        <i class="fas fa-cloud-sun"></i> Weather Analysis
+                    </h5>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                        Temperature, humidity, rainfall, and wind speed are analyzed to identify conditions favorable for pest outbreaks.
+                    </p>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <h5 style="color: var(--success-color); margin-bottom: 0.5rem;">
+                        <i class="fas fa-seedling"></i> Crop Characteristics
+                    </h5>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                        Crop type, growth stage, and area are considered as different stages have varying susceptibility.
+                    </p>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <h5 style="color: var(--danger-color); margin-bottom: 0.5rem;">
+                        <i class="fas fa-bug"></i> Pest Patterns
+                    </h5>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                        Historical infestation records help identify recurring patterns and seasonal trends.
+                    </p>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <h5 style="color: var(--warning-color); margin-bottom: 0.5rem;">
+                        <i class="fas fa-calendar-alt"></i> Seasonal Factors
+                    </h5>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                        Monsoon, winter, and summer seasons affect pest activity differently.
+                    </p>
+                </div>
+                
+                <div style="padding: 1rem; background: var(--bg-primary); border-radius: 8px;">
+                    <h5 style="margin-bottom: 0.5rem;">
+                        <i class="fas fa-brain"></i> ML Algorithm
+                    </h5>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+                        Uses Gradient Boosting Regressor with 18 engineered features. Falls back to rule-based system if insufficient training data.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tips -->
+    <div class="card" style="max-width: 1200px; margin: 2rem auto;">
+        <div class="card-header">
+            <i class="fas fa-lightbulb"></i> Tips for Better Predictions
+        </div>
+        <div class="card-body">
+            <div class="grid grid-3">
+                <div style="padding: 1rem; background: var(--bg-primary); border-radius: 8px;">
+                    <h5 style="color: var(--info-color); margin-bottom: 0.5rem;">
+                        <i class="fas fa-database"></i> Add Historical Data
+                    </h5>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+                        More infestation records improve prediction accuracy by identifying patterns.
+                    </p>
+                </div>
+                
+                <div style="padding: 1rem; background: var(--bg-primary); border-radius: 8px;">
+                    <h5 style="color: var(--info-color); margin-bottom: 0.5rem;">
+                        <i class="fas fa-sync"></i> Update Weather Data
+                    </h5>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+                        Keep weather data current for the most accurate environmental risk assessment.
+                    </p>
+                </div>
+                
+                <div style="padding: 1rem; background: var(--bg-primary); border-radius: 8px;">
+                    <h5 style="color: var(--info-color); margin-bottom: 0.5rem;">
+                        <i class="fas fa-redo"></i> Regular Generation
+                    </h5>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+                        Generate predictions daily or weekly to stay ahead of potential outbreaks.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="flex gap-2" style="max-width: 1200px; margin: 2rem auto;">
+        <a href="{% url 'predictions:prediction_list' %}" class="btn btn-outline">
+            <i class="fas fa-arrow-left"></i> Back to Predictions
+        </a>
+        <a href="{% url 'dashboard:home' %}" class="btn btn-secondary">
+            <i class="fas fa-home"></i> Dashboard
+        </a>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Custom template filter for multiplication (for display purposes)
+document.addEventListener('DOMContentLoaded', function() {
+    // Add any interactive features here if needed
+});
+</script>
+{% endblock %}

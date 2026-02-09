@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Alert Dashboard - Pest & Disease Risk Prediction{% endblock %}
+
+{% block content %}
+<div class="alert-dashboard-page">
+    <div class="flex-between mb-3">
+        <h1><i class="fas fa-bell"></i> Alert Dashboard</h1>
+        <div class="flex gap-2">
+            <a href="{% url 'alerts:alert_settings' %}" class="btn btn-secondary">
+                <i class="fas fa-cog"></i> Settings
+            </a>
+            <a href="{% url 'alerts:generate_alerts' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Generate Alerts
+            </a>
+        </div>
+    </div>
+    
+    <!-- Statistics -->
+    <div class="grid grid-4 mb-3">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-bell"></i></div>
+            <div class="stat-value">{{ stats.total }}</div>
+            <div class="stat-label">Total Alerts ({{ days }} days)</div>
+        </div>
+        
+        <div class="stat-card info">
+            <div class="stat-icon"><i class="fas fa-envelope"></i></div>
+            <div class="stat-value">{{ stats.unread }}</div>
+            <div class="stat-label">Unread Alerts</div>
+        </div>
+        
+        <div class="stat-card danger">
+            <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="stat-value">{{ stats.critical }}</div>
+            <div class="stat-label">Critical Alerts</div>
+        </div>
+        
+        <div class="stat-card warning">
+            <div class="stat-icon"><i class="fas fa-exclamation-circle"></i></div>
+            <div class="stat-value">{{ stats.danger }}</div>
+            <div class="stat-label">Danger Alerts</div>
+        </div>
+    </div>
+    
+    <!-- Filter -->
+    <div class="card mb-3">
+        <div class="card-body">
+            <form method="get" class="flex gap-2">
+                <div class="form-group" style="flex: 0 0 200px; margin-bottom: 0;">
+                    <select name="days" class="form-control">
+                        <option value="7" {% if days == 7 %}selected{% endif %}>Last 7 Days</option>
+                        <option value="14" {% if days == 14 %}selected{% endif %}>Last 14 Days</option>
+                        <option value="30" {% if days == 30 %}selected{% endif %}>Last 30 Days</option>
+                        <option value="60" {% if days == 60 %}selected{% endif %}>Last 60 Days</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-sync"></i> Update</button>
+                <a href="{% url 'alerts:alert_list' %}" class="btn btn-outline">
+                    <i class="fas fa-list"></i> View All Alerts
+                </a>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Charts Row -->
+    <div class="grid grid-2 mb-3">
+        <!-- Alert Trend -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-chart-line"></i> Alert Trend
+            </div>
+            <div class="card-body">
+                <canvas id="alertTrendChart" style="height: 250px;"></canvas>
+            </div>
+        </div>
+        
+        <!-- Severity Distribution -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-chart-pie"></i> Severity Distribution
+            </div>
+            <div class="card-body">
+                <canvas id="severityChart" style="height: 250px;"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Affected -->
+    <div class="grid grid-2 mb-3">
+        <!-- Top Crops -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-seedling"></i> Most Affected Crops
+            </div>
+            <div class="card-body">
+                {% if top_crops %}
+                    {% for crop in top_crops %}
+                        <div style="padding: 0.75rem; background: var(--bg-primary); border-radius: 8px; margin-bottom: 0.75rem;">
+                            <div class="flex-between">
+                                <strong>{{ crop.prediction__crop__name }}</strong>
+                                <span class="badge-pill badge-danger">{{ crop.count }} alerts</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: var(--text-muted); text-align: center; padding: 2rem;">No data available</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Top Pests -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-bug"></i> Most Common Pests
+            </div>
+            <div class="card-body">
+                {% if top_pests %}
+                    {% for pest in top_pests %}
+                        <div style="padding: 0.75rem; background: var(--bg-primary); border-radius: 8px; margin-bottom: 0.75rem;">
+                            <div class="flex-between">
+                                <strong>{{ pest.prediction__pest__name }}</strong>
+                                <span class="badge-pill badge-danger">{{ pest.count }} alerts</span>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="color: var(--text-muted); text-align: center; padding: 2rem;">No data available</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Critical Alerts -->
+    {% if critical_alerts %}
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-exclamation-triangle"></i> Critical Unread Alerts
+        </div>
+        <div class="card-body">
+            {% for alert in critical_alerts %}
+                <div style="padding: 1rem; background: var(--bg-primary); border-radius: 8px; border-left: 4px solid var(--danger-color); margin-bottom: 1rem;">
+                    <div class="flex-between mb-2">
+                        <div class="flex gap-2" style="align-items: center;">
+                            <span class="badge-pill badge-danger">{{ alert.severity }}</span>
+                            <span style="color: var(--text-muted); font-size: 0.85rem;">
+                                {{ alert.created_at|date:"M d, Y H:i" }}
+                            </span>
+                        </div>
+                        <a href="{% url 'alerts:mark_as_read' alert.pk %}" class="btn btn-primary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+                            <i class="fas fa-check"></i> Mark Read
+                        </a>
+                    </div>
+                    <p style="margin-bottom: 0.75rem;">{{ alert.message }}</p>
+                    <div style="color: var(--text-muted); font-size: 0.9rem;">
+                        <i class="fas fa-seedling"></i> {{ alert.prediction.crop.name }} • 
+                        <i class="fas fa-bug"></i> {{ alert.prediction.pest.name }} • 
+                        Risk: {{ alert.prediction.risk_score }}%
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Alert Trend Chart
+    const trendData = JSON.parse('{{ daily_trend|safe }}');
+    const trendCtx = document.getElementById('alertTrendChart');
+    
+    if (trendCtx && trendData.length > 0) {
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: trendData.map(d => d.date),
+                datasets: [{
+                    label: 'Alerts',
+                    data: trendData.map(d => d.count),
+                    borderColor: '#ef4444',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Severity Distribution Chart
+    const severityData = JSON.parse('{{ severity_dist|safe }}');
+    const severityCtx = document.getElementById('severityChart');
+    
+    if (severityCtx && severityData.length > 0) {
+        const severityColors = {
+            'CRITICAL': '#dc2626',
+            'DANGER': '#ef4444',
+            'WARNING': '#f59e0b',
+            'INFO': '#3b82f6'
+        };
+        
+        new Chart(severityCtx, {
+            type: 'doughnut',
+            data: {
+                labels: severityData.map(d => d.severity),
+                datasets: [{
+                    data: severityData.map(d => d.count),
+                    backgroundColor: severityData.map(d => severityColors[d.severity] || '#6b7280'),
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

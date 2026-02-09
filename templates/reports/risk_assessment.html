@@ -1,0 +1,73 @@
+{% load static %}
+{% extends 'base.html' %}
+
+{% block title %}Risk Assessment Report{% endblock %}
+
+{% block content %}
+<div class="report-page">
+    <div class="flex-between mb-3">
+        <h1><i class="fas fa-file-alt"></i> Risk Assessment Report</h1>
+        <button class="btn btn-primary" onclick="window.print()">
+            <i class="fas fa-print"></i> Print Report
+        </button>
+    </div>
+    
+    <!-- Summary -->
+    <div class="grid grid-3 mb-3">
+        <div class="stat-card danger">
+            <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <div class="stat-value">{{ high_risk.count }}</div>
+            <div class="stat-label">High Risk</div>
+        </div>
+        
+        <div class="stat-card warning">
+            <div class="stat-icon"><i class="fas fa-exclamation-circle"></i></div>
+            <div class="stat-value">{{ medium_risk.count }}</div>
+            <div class="stat-label">Medium Risk</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+            <div class="stat-value">{{ low_risk.count }}</div>
+            <div class="stat-label">Low Risk</div>
+        </div>
+    </div>
+    
+    <!-- High Risk Predictions -->
+    {% if high_risk %}
+    <div class="card mb-3">
+        <div class="card-header">
+            <i class="fas fa-exclamation-triangle"></i> High Risk Predictions
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Crop</th>
+                        <th>Pest</th>
+                        <th>Risk Score</th>
+                        <th>Confidence</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prediction in high_risk %}
+                        <tr>
+                            <td>{{ prediction.crop.name }}</td>
+                            <td>{{ prediction.pest.name }}</td>
+                            <td><strong>{{ prediction.risk_score }}%</strong></td>
+                            <td>{{ prediction.confidence }}%</td>
+                            <td>{{ prediction.prediction_date }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+    
+    <p style="color: var(--text-muted); text-align: center; margin-top: 2rem;">
+        <em>PDF generation will be implemented in Phase 7</em>
+    </p>
+</div>
+{% endblock %}
